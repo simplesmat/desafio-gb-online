@@ -47,6 +47,7 @@ export default function RecipeList() {
       const data = await response.json()
       setRecipes(data.recipes)
       
+      // algum erro nos set repetindo
       setCuisines(Array.from(new Set(data.recipes.map((recipe: Recipe) => recipe.cuisine))))
       setMealTypes(Array.from(new Set(data.recipes.map((recipe: Recipe) => recipe.mealType))))
       setDifficulties(Array.from(new Set(data.recipes.map((recipe: Recipe) => recipe.difficulty))))
