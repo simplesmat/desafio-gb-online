@@ -52,10 +52,15 @@ export default function RecipeList() {
 
       // erro está que n to gerando um set talvez?
       // dar sort e remover duplicatas maybe
+      // nao funcionou :/ case sensitive talvez?
 
-      setCuisines(Array.from(new Set(data.recipes.map((recipe: Recipe) => recipe.cuisine))))
-      setMealTypes(Array.from(new Set(data.recipes.map((recipe: Recipe) => recipe.mealType))))
-      setDifficulties(Array.from(new Set(data.recipes.map((recipe: Recipe) => recipe.difficulty))))
+      const uniqueCuisines = [...new Set(data.recipes.map((recipe: Recipe) => recipe.cuisine))].sort() as string[]
+      const uniqueMealTypes = [...new Set(data.recipes.map((recipe: Recipe) => recipe.mealType))].sort() as string[]
+      const uniqueDifficulties = [...new Set(data.recipes.map((recipe: Recipe) => recipe.difficulty))].sort() as string[]
+
+      setCuisines(uniqueCuisines)
+      setMealTypes(uniqueMealTypes)
+      setDifficulties(uniqueDifficulties)
     } catch (error) {
       console.error('Error fetching recipes:', error)
     }
@@ -146,10 +151,21 @@ export default function RecipeList() {
                 alt={recipe.name}
                 className="w-full h-48 object-cover rounded"
               />
-              <p>Cozinha de origem: {recipe.cuisine}</p>
-              <p>Tipo de refeição: {recipe.mealType}</p>
-              <p>Dificuldade: {recipe.difficulty}</p>
-              <p>Classificação: {recipe.rating}</p>
+              <div className="text-sm text-gray-600 space-y-1">
+                <p>
+                  <strong>Cozinha de origem:</strong> {recipe.cuisine}
+                </p>
+                <p>
+                  <strong>Tipo de refeição:</strong> {recipe.mealType}
+                </p>
+                <p>
+                  <strong>Dificuldade:</strong> {recipe.difficulty}
+                </p>
+                <p>
+                  <strong>Classificação:</strong>{' '}
+                  <span className="text-yellow-500 font-medium">{'★'.repeat(recipe.rating)}{'☆'.repeat(5 - recipe.rating)}</span>
+                </p>
+              </div>
               <Button
                 variant="link"
                 className="mt-2"
