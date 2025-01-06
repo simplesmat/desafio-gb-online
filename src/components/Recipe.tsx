@@ -1,5 +1,4 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -11,12 +10,14 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 interface Recipe {
   id: number
   name: string
   cuisine: string
   image: string
+  instructions: string[]
   mealType: string
   difficulty: string
   rating: number
@@ -33,6 +34,7 @@ export default function RecipeList() {
   const [selectedDifficulty, setSelectedDifficulty] = useState('all')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [searchTerm, setSearchTerm] = useState('')
+  const [expandedRecipe, setExpandedRecipe] = useState<Recipe | null>(null)
 
   useEffect(() => {
     fetchRecipes()
@@ -48,7 +50,9 @@ export default function RecipeList() {
       const data = await response.json()
       setRecipes(data.recipes)
 
-      // algum erro nos set repetindo
+      // erro está que n to gerando um set talvez?
+      // dar sort e remover duplicatas maybe
+
       setCuisines(Array.from(new Set(data.recipes.map((recipe: Recipe) => recipe.cuisine))))
       setMealTypes(Array.from(new Set(data.recipes.map((recipe: Recipe) => recipe.mealType))))
       setDifficulties(Array.from(new Set(data.recipes.map((recipe: Recipe) => recipe.difficulty))))
@@ -89,7 +93,7 @@ export default function RecipeList() {
             <SelectValue placeholder="Cozinha de origem" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Cuisines</SelectItem>
+            <SelectItem value="all">Todos</SelectItem>
             {cuisines.map((cuisine, index) => (
               <SelectItem key={`cuisine-${cuisine}-${index}`} value={cuisine}>
                 {cuisine}
@@ -138,19 +142,52 @@ export default function RecipeList() {
             </CardHeader>
             <CardContent>
               <img
-                  src={recipe.image}
-                  alt={recipe.name}
-                  className="w-full h-48 object-cover rounded"
-                />
+                src={recipe.image}
+                alt={recipe.name}
+                className="w-full h-48 object-cover rounded"
+              />
               <p>Cozinha de origem: {recipe.cuisine}</p>
               <p>Tipo de refeição: {recipe.mealType}</p>
               <p>Dificuldade: {recipe.difficulty}</p>
               <p>Classificação: {recipe.rating}</p>
+              <Button
+                variant="link"
+                className="mt-2"
+                onClick={() => setExpandedRecipe(recipe)}
+              >
+                Ver Instruções
+              </Button>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      {expandedRecipe && (
+        <Dialog open={!!expandedRecipe} onOpenChange={() => setExpandedRecipe(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{expandedRecipe.name}</DialogTitle>
+            </DialogHeader>
+            <img
+              src={expandedRecipe.image}
+              alt={expandedRecipe.name}
+              className="w-full h-48 object-cover rounded"
+            />
+            <ul className="mt-2 list-disc pl-5">
+              {expandedRecipe.instructions.map((instruction, index) => (
+                <li key={`instruction-${expandedRecipe.id}-${index}`}>{instruction}</li>
+              ))}
+            </ul>
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => setExpandedRecipe(null)}
+            >
+              Fechar
+            </Button>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }
-
