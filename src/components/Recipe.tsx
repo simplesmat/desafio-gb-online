@@ -1,8 +1,10 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback} from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+
 import { Checkbox } from "@/components/ui/checkbox"
+import Image from 'next/image';
 import {
   Select,
   SelectContent,
@@ -20,14 +22,13 @@ interface Recipe {
   image: string;
   ingredients: string[];
   instructions: string[];
-  mealType: string;
+  mealType: string | string[];
   difficulty: string;
   prepTimeMinutes?: number;
   cookTimeMinutes?: number;
-  totalTime: number; 
+  totalTime: number;
   rating: number;
 }
-
 interface RecipeDialogProps {
   recipe: Recipe | null
   onClose: () => void
@@ -54,9 +55,11 @@ const RecipeDialog = ({ recipe, onClose }: RecipeDialogProps) => {
         <DialogHeader>
           <DialogTitle>{recipe.name}</DialogTitle>
         </DialogHeader>
-        <img
+        <Image
           src={recipe.image}
           alt={recipe.name}
+          width={400} 
+          height={300}
           className="w-full h-48 object-cover rounded"
         />
         <div className="grid md:grid-cols-2 gap-4">
@@ -124,36 +127,33 @@ export default function RecipeList() {
 
   const fetchRecipes = async () => {
     try {
-      const response = await fetch('https://dummyjson.com/recipes')
-      const data = await response.json()
-      const processedRecipes = data.recipes.map((recipe: any) => ({
+      const response = await fetch('https://dummyjson.com/recipes');
+      const data: { recipes: Recipe[] } = await response.json();
+      const processedRecipes: Recipe[] = data.recipes.map((recipe) => ({
         ...recipe,
         totalTime: (recipe.prepTimeMinutes || 0) + (recipe.cookTimeMinutes || 0),
       }));
   
       setRecipes(processedRecipes);
-
-      const normalizeAndSort = (items: any[]) => {
-        const flatItems = items.flat()
-        return [...new Set(flatItems.map((item) => item.trim().toLowerCase()))].sort()
-      }
+      const normalizeAndSort = (items: string[]) =>
+        [...new Set(items.map((item) => item.trim().toLowerCase()))].sort();
   
-      setCuisines(normalizeAndSort(data.recipes.map((recipe: Recipe) => recipe.cuisine)))
-      setMealTypes(normalizeAndSort(data.recipes.map((recipe: Recipe) => recipe.mealType)))
-      setDifficulties(normalizeAndSort(data.recipes.map((recipe: Recipe) => recipe.difficulty)))
+      setCuisines(normalizeAndSort(data.recipes.map((recipe) => recipe.cuisine)));
+      setMealTypes(normalizeAndSort(data.recipes.flatMap((recipe) => recipe.mealType)));
+      setDifficulties(normalizeAndSort(data.recipes.map((recipe) => recipe.difficulty)));
     } catch (error) {
-      console.error('Error fetching recipes:', error)
+      console.error('Error fetching recipes:', error);
     }
-  }
+  };
   //isso pode melhorar de alguma forma
-  const filterAndSortRecipes = () => {
-    const normalizeString = (str: any) => (typeof str === 'string' ? str.trim().toLowerCase() : '');
-
+  const filterAndSortRecipes = useCallback(() => {
+    const normalizeString = (str: string | undefined): string => (str ? str.trim().toLowerCase() : '');
+  
     const selectedCuisineNormalized = normalizeString(selectedCuisine);
     const selectedMealTypeNormalized = normalizeString(selectedMealType);
     const selectedDifficultyNormalized = normalizeString(selectedDifficulty);
     const searchTermNormalized = normalizeString(searchTerm);
-
+  
     const filtered = recipes.filter((recipe) => {
       const cuisine = normalizeString(recipe.cuisine);
       const mealTypes = Array.isArray(recipe.mealType)
@@ -161,7 +161,7 @@ export default function RecipeList() {
         : [normalizeString(recipe.mealType)];
       const difficulty = normalizeString(recipe.difficulty);
       const name = normalizeString(recipe.name);
-
+  
       return (
         (selectedCuisineNormalized === 'all' || cuisine === selectedCuisineNormalized) &&
         (selectedMealTypeNormalized === 'all' || mealTypes.includes(selectedMealTypeNormalized)) &&
@@ -169,15 +169,17 @@ export default function RecipeList() {
         name.includes(searchTermNormalized)
       );
     });
-
+  
     setFilteredRecipes(
-      filtered.sort((a, b) => (sortOrder === 'asc' ? a.rating - b.rating : b.rating - a.rating))
+      filtered.sort((a, b) =>
+        sortOrder === 'asc' ? a.rating - b.rating : b.rating - a.rating
+      )
     );
-  };
-
+  }, [recipes, selectedCuisine, selectedMealType, selectedDifficulty, sortOrder, searchTerm]);
+  
   useEffect(() => {
     filterAndSortRecipes();
-  }, [recipes, selectedCuisine, selectedMealType, selectedDifficulty, searchTerm, sortOrder]);
+  }, [filterAndSortRecipes]);
 
   return (
     <div>
@@ -242,9 +244,11 @@ export default function RecipeList() {
               <CardTitle>{recipe.name}</CardTitle>
             </CardHeader>
             <CardContent>
-                <img
+                <Image
                   src={recipe.image}
                   alt={recipe.name}
+                  width={400} 
+                  height={300}
                   className="w-full h-48 object-cover rounded"
                 />
                 <div className="text-sm text-gray-600 space-y-1">
