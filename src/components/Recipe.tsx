@@ -170,12 +170,35 @@ export default function RecipeList() {
       );
     });
   
+    const normalizeAndSort = (items: string[]) =>
+      [...new Set(items.map((item) => item.trim().toLowerCase()))].sort();
+  
+    setMealTypes(
+      normalizeAndSort(
+        filtered.flatMap((recipe) =>
+          Array.isArray(recipe.mealType) ? recipe.mealType : [recipe.mealType]
+        )
+      )
+    );
+    setDifficulties(
+      normalizeAndSort(filtered.map((recipe) => recipe.difficulty))
+    );
+  
     setFilteredRecipes(
       filtered.sort((a, b) =>
         sortOrder === 'asc' ? a.rating - b.rating : b.rating - a.rating
       )
     );
   }, [recipes, selectedCuisine, selectedMealType, selectedDifficulty, sortOrder, searchTerm]);
+  
+  useEffect(() => {
+  if (!mealTypes.includes(selectedMealType)) {
+    setSelectedMealType('all');
+  }
+  if (!difficulties.includes(selectedDifficulty)) {
+    setSelectedDifficulty('all');
+  }
+}, [mealTypes, difficulties]);
   
   useEffect(() => {
     filterAndSortRecipes();
@@ -256,7 +279,9 @@ export default function RecipeList() {
                     <strong>Cozinha de origem:</strong> {recipe.cuisine}
                   </p>
                   <p>
-                    <strong>Tipo de refeição:</strong> {recipe.mealType}
+                    <strong>Tipo de refeição:</strong> {Array.isArray(recipe.mealType) 
+                      ? recipe.mealType.join(', ') 
+                      : recipe.mealType}
                   </p>
                   <p>
                     <strong>Dificuldade:</strong> {recipe.difficulty}
