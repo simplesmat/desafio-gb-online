@@ -16,6 +16,7 @@ interface Recipe {
   id: number
   name: string
   cuisine: string
+  image: string
   mealType: string
   difficulty: string
   rating: number
@@ -46,7 +47,7 @@ export default function RecipeList() {
       const response = await fetch('https://dummyjson.com/recipes')
       const data = await response.json()
       setRecipes(data.recipes)
-      
+
       // algum erro nos set repetindo
       setCuisines(Array.from(new Set(data.recipes.map((recipe: Recipe) => recipe.cuisine))))
       setMealTypes(Array.from(new Set(data.recipes.map((recipe: Recipe) => recipe.mealType))))
@@ -78,14 +79,14 @@ export default function RecipeList() {
       <div className="mb-4 flex flex-wrap gap-4">
         <Input
           type="text"
-          placeholder="Search by name"
+          placeholder="Procure por nome"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-xs"
         />
         <Select value={selectedCuisine} onValueChange={setSelectedCuisine}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Cuisine" />
+            <SelectValue placeholder="Cozinha de origem" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Cuisines</SelectItem>
@@ -98,10 +99,10 @@ export default function RecipeList() {
         </Select>
         <Select value={selectedMealType} onValueChange={setSelectedMealType}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Meal Type" />
+            <SelectValue placeholder="Tipo de refeição" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Meal Types</SelectItem>
+            <SelectItem value="all">Todos</SelectItem>
             {mealTypes.map((mealType, index) => (
               <SelectItem key={`mealType-${mealType}-${index}`} value={mealType}>
                 {mealType}
@@ -114,7 +115,7 @@ export default function RecipeList() {
             <SelectValue placeholder="Difficulty" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Difficulties</SelectItem>
+            <SelectItem value="all">Todos</SelectItem>
             {difficulties.map((difficulty, index) => (
               <SelectItem key={`difficulty-${difficulty}-${index}`} value={difficulty}>
                 {difficulty}
@@ -126,7 +127,7 @@ export default function RecipeList() {
           variant="outline"
           onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
         >
-          Sort by Rating: {sortOrder === 'asc' ? '↑' : '↓'}
+          Ordene por classificação: {sortOrder === 'asc' ? '↑' : '↓'}
         </Button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -136,10 +137,15 @@ export default function RecipeList() {
               <CardTitle>{recipe.name}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p>Cuisine: {recipe.cuisine}</p>
-              <p>Meal Type: {recipe.mealType}</p>
-              <p>Difficulty: {recipe.difficulty}</p>
-              <p>Rating: {recipe.rating}</p>
+              <img
+                  src={recipe.image}
+                  alt={recipe.name}
+                  className="w-full h-48 object-cover rounded"
+                />
+              <p>Cozinha de origem: {recipe.cuisine}</p>
+              <p>Tipo de refeição: {recipe.mealType}</p>
+              <p>Dificuldade: {recipe.difficulty}</p>
+              <p>Classificação: {recipe.rating}</p>
             </CardContent>
           </Card>
         ))}
