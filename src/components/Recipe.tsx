@@ -125,38 +125,51 @@ export default function RecipeList() {
       const data = await response.json()
       setRecipes(data.recipes)
 
-      // case sensitive, normalizar antes de fazer o set
-
-      
-
-      const uniqueCuisines = [...new Set(data.recipes.map((recipe: Recipe) => recipe.cuisine))].sort() as string[]
-      const uniqueMealTypes = [...new Set(data.recipes.map((recipe: Recipe) => recipe.mealType))].sort() as string[]
-      const uniqueDifficulties = [...new Set(data.recipes.map((recipe: Recipe) => recipe.difficulty))].sort() as string[]
-
-      setCuisines(uniqueCuisines)
-      setMealTypes(uniqueMealTypes)
-      setDifficulties(uniqueDifficulties)
+      const normalizeAndSort = (items: any[]) => {
+        const flatItems = items.flat()
+        return [...new Set(flatItems.map((item) => item.trim().toLowerCase()))].sort()
+      }
+  
+      setCuisines(normalizeAndSort(data.recipes.map((recipe: Recipe) => recipe.cuisine)))
+      setMealTypes(normalizeAndSort(data.recipes.map((recipe: Recipe) => recipe.mealType)))
+      setDifficulties(normalizeAndSort(data.recipes.map((recipe: Recipe) => recipe.difficulty)))
     } catch (error) {
       console.error('Error fetching recipes:', error)
     }
   }
-
+  //isso pode melhorar de alguma forma
   const filterAndSortRecipes = () => {
-    let filtered = recipes.filter((recipe) => {
+    const normalizeString = (str: any) => (typeof str === 'string' ? str.trim().toLowerCase() : '');
+
+    const selectedCuisineNormalized = normalizeString(selectedCuisine);
+    const selectedMealTypeNormalized = normalizeString(selectedMealType);
+    const selectedDifficultyNormalized = normalizeString(selectedDifficulty);
+    const searchTermNormalized = normalizeString(searchTerm);
+
+    const filtered = recipes.filter((recipe) => {
+      const cuisine = normalizeString(recipe.cuisine);
+      const mealTypes = Array.isArray(recipe.mealType)
+        ? recipe.mealType.map(normalizeString)
+        : [normalizeString(recipe.mealType)];
+      const difficulty = normalizeString(recipe.difficulty);
+      const name = normalizeString(recipe.name);
+
       return (
-        (selectedCuisine === 'all' || recipe.cuisine === selectedCuisine) &&
-        (selectedMealType === 'all' || recipe.mealType === selectedMealType) &&
-        (selectedDifficulty === 'all' || recipe.difficulty === selectedDifficulty) &&
-        recipe.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    })
+        (selectedCuisineNormalized === 'all' || cuisine === selectedCuisineNormalized) &&
+        (selectedMealTypeNormalized === 'all' || mealTypes.includes(selectedMealTypeNormalized)) &&
+        (selectedDifficultyNormalized === 'all' || difficulty === selectedDifficultyNormalized) &&
+        name.includes(searchTermNormalized)
+      );
+    });
 
-    filtered.sort((a, b) => {
-      return sortOrder === 'asc' ? a.rating - b.rating : b.rating - a.rating
-    })
+    setFilteredRecipes(
+      filtered.sort((a, b) => (sortOrder === 'asc' ? a.rating - b.rating : b.rating - a.rating))
+    );
+  };
 
-    setFilteredRecipes(filtered)
-  }
+  useEffect(() => {
+    filterAndSortRecipes();
+  }, [recipes, selectedCuisine, selectedMealType, selectedDifficulty, searchTerm, sortOrder]);
 
   return (
     <div>
@@ -176,7 +189,7 @@ export default function RecipeList() {
             <SelectItem value="all">Todos</SelectItem>
             {cuisines.map((cuisine, index) => (
               <SelectItem key={`cuisine-${cuisine}-${index}`} value={cuisine}>
-                {cuisine}
+                {cuisine.charAt(0).toUpperCase() + cuisine.slice(1)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -189,7 +202,7 @@ export default function RecipeList() {
             <SelectItem value="all">Todos</SelectItem>
             {mealTypes.map((mealType, index) => (
               <SelectItem key={`mealType-${mealType}-${index}`} value={mealType}>
-                {mealType}
+                {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -202,7 +215,7 @@ export default function RecipeList() {
             <SelectItem value="all">Todos</SelectItem>
             {difficulties.map((difficulty, index) => (
               <SelectItem key={`difficulty-${difficulty}-${index}`} value={difficulty}>
-                {difficulty}
+                {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
               </SelectItem>
             ))}
           </SelectContent>
