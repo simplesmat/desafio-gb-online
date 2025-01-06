@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Select,
   SelectContent,
@@ -17,11 +18,85 @@ interface Recipe {
   name: string
   cuisine: string
   image: string
+  ingredients: string[]
   instructions: string[]
   mealType: string
   difficulty: string
   rating: number
 }
+
+interface RecipeDialogProps {
+  recipe: Recipe | null
+  onClose: () => void
+}
+
+const RecipeDialog = ({ recipe, onClose }: RecipeDialogProps) => {
+  const [checkedIngredients, setCheckedIngredients] = useState<Set<string>>(new Set())
+
+  if (!recipe) return null
+
+  const toggleIngredient = (ingredient: string) => {
+    const newChecked = new Set(checkedIngredients)
+    if (newChecked.has(ingredient)) {
+      newChecked.delete(ingredient)
+    } else {
+      newChecked.add(ingredient)
+    }
+    setCheckedIngredients(newChecked)
+  }
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{recipe.name}</DialogTitle>
+        </DialogHeader>
+        <img
+          src={recipe.image}
+          alt={recipe.name}
+          className="w-full h-48 object-cover rounded"
+        />
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Ingredientes</h3>
+            <div className="space-y-2">
+              {recipe.ingredients.map((ingredient, index) => (
+                <div key={`ingredient-${index}`} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`ingredient-${index}`}
+                    checked={checkedIngredients.has(ingredient)}
+                    onCheckedChange={() => toggleIngredient(ingredient)}
+                  />
+                  <label
+                    htmlFor={`ingredient-${index}`}
+                    className={`text-sm ${
+                      checkedIngredients.has(ingredient) ? "line-through text-gray-500" : ""
+                    }`}
+                  >
+                    {ingredient}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Instruções</h3>
+            <ol className="list-decimal pl-5 space-y-2">
+              {recipe.instructions.map((instruction, index) => (
+                <li key={`instruction-${index}`} className="text-sm">
+                  {instruction}
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+        <Button variant="outline" onClick={onClose} className="mt-4">
+          Fechar
+        </Button>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 export default function RecipeList() {
   const [recipes, setRecipes] = useState<Recipe[]>([])
@@ -50,9 +125,9 @@ export default function RecipeList() {
       const data = await response.json()
       setRecipes(data.recipes)
 
-      // erro está que n to gerando um set talvez?
-      // dar sort e remover duplicatas maybe
-      // nao funcionou :/ case sensitive talvez?
+      // case sensitive, normalizar antes de fazer o set
+
+      
 
       const uniqueCuisines = [...new Set(data.recipes.map((recipe: Recipe) => recipe.cuisine))].sort() as string[]
       const uniqueMealTypes = [...new Set(data.recipes.map((recipe: Recipe) => recipe.mealType))].sort() as string[]
@@ -179,30 +254,10 @@ export default function RecipeList() {
       </div>
 
       {expandedRecipe && (
-        <Dialog open={!!expandedRecipe} onOpenChange={() => setExpandedRecipe(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{expandedRecipe.name}</DialogTitle>
-            </DialogHeader>
-            <img
-              src={expandedRecipe.image}
-              alt={expandedRecipe.name}
-              className="w-full h-48 object-cover rounded"
-            />
-            <ul className="mt-2 list-disc pl-5">
-              {expandedRecipe.instructions.map((instruction, index) => (
-                <li key={`instruction-${expandedRecipe.id}-${index}`}>{instruction}</li>
-              ))}
-            </ul>
-            <Button
-              variant="outline"
-              className="mt-4"
-              onClick={() => setExpandedRecipe(null)}
-            >
-              Fechar
-            </Button>
-          </DialogContent>
-        </Dialog>
+        <RecipeDialog 
+          recipe={expandedRecipe} 
+          onClose={() => setExpandedRecipe(null)} 
+        />
       )}
     </div>
   )
